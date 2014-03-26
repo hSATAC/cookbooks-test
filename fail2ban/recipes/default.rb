@@ -13,7 +13,7 @@ template "/etc/fail2ban/jail.conf" do
   source "jail.conf.erb"
   group "root"
   owner "root"
-  mode 0644
+  mode 0666
   notifies :restart, "service[fail2ban]", :delayed
 end
 
@@ -21,7 +21,7 @@ template "/etc/fail2ban/action.d/devcore-iptable.conf" do
   source "action.d/devcore-iptable.conf.erb"
   group "root"
   owner "root"
-  mode 0644
+  mode 0666
   notifies :restart, "service[fail2ban]", :delayed
 end
 
@@ -29,7 +29,7 @@ template "/etc/fail2ban/filter.d/apache-devcore.conf" do
   source "filter.d/apache-devcore.conf.erb"
   group "root"
   owner "root"
-  mode 0644
+  mode 0666
   notifies :restart, "service[fail2ban]", :delayed
 end
 
