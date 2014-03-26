@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# This file is managed by Chef for <%= @node[:hostname] %>
+# Do NOT modify this file directly.
+# Or remember apply changes to Chef configs.
+
+BACKUPHOME="/home/deployer/db-dumps/oa_production_db_backup/"
+S3BACKUPDIR='s3://openapply.backup/database/oa_production_db_weekly/'
+S3CMD='/home/deployer/s3cmd/s3cmd'
+
+cd $BACKUPHOME
+BACKUPDIR=`ls -td * | head -1`
+tar czf $BACKUPDIR.tar.gz $BACKUPDIR
+mv $BACKUPDIR.tar.gz ../weekly
+cd ../weekly
+
+$S3CMD put $BACKUPDIR.tar.gz $S3BACKUPDIR

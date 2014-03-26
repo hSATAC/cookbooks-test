@@ -1,0 +1,29 @@
+# This file is managed by Chef for <%= @node[:hostname] %>
+# Do NOT modify this file directly.
+# Or remember apply changes to Chef configs.
+
+#hostname = www.openapply.com # warning: unused parameter
+mydomain = openapply.com
+myorigin = $mydomain
+smtpd_banner = $myhostname ESMTP $mail_name
+biff = no
+append_dot_mydomain = no
+alias_maps = hash:/etc/aliases
+alias_database = hash:/etc/aliases
+mydestination = localdomain, localhost, localhost.localdomain, localhost
+mynetworks = 127.0.0.0/8
+mailbox_size_limit = 0
+recipient_delimiter = +
+inet_interfaces = 127.0.0.1
+
+smtp_sasl_auth_enable = yes
+smtp_sasl_password_maps = static:oa_sender:D*8q3yq4
+smtp_sasl_security_options = noanonymous
+smtp_tls_security_level = may
+header_size_limit = 4096000
+relayhost = [smtp.sendgrid.net]:587
+
+default_destination_concurrency_limit = 4
+soft_bounce = yes
+append_at_myorigin = no
+message_size_limit = 10540000

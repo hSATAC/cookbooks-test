@@ -1,0 +1,51 @@
+# This file is managed by Chef for <%= @node[:hostname] %>
+# Do NOT modify this file directly.
+# Or remember apply changes to Chef configs.
+
+server {
+  listen 80;
+  server_name blog.openapply.com;
+
+  root /srv/openapply_blog;
+
+  access_log /var/log/nginx/openapply_blog/access.log;
+  error_log  /var/log/nginx/openapply_blog/error.log;
+
+  location / {
+    index index.html index.htm index.php;
+    try_files $uri $uri/ /index.php?q=$uri&$args;
+  }
+
+  location ~ \.php$ {
+    include /etc/nginx/fastcgi_params;
+    fastcgi_pass  127.0.0.1:9000;
+    fastcgi_index index.php;
+    fastcgi_param SCRIPT_FILENAME /srv/openapply_blog$fastcgi_script_name;
+  }
+}
+
+server {
+  listen 443 ssl spdy;
+  server_name blog.openapply.com;
+
+  ssl                 on;
+  ssl_certificate     <%= node[:openapply][:ssl_certificate_path] %>/openapply.com.combined.crt;
+  ssl_certificate_key <%= node[:openapply][:ssl_certificate_path] %>/openapply.com.key;
+
+  root /srv/openapply_blog;
+
+  access_log /var/log/nginx/openapply_blog/access.log;
+  error_log  /var/log/nginx/openapply_blog/error.log;
+
+  location / {
+    index index.html index.htm index.php;
+    try_files $uri $uri/ /index.php?q=$uri&$args;
+  }
+
+  location ~ \.php$ {
+    include /etc/nginx/fastcgi_params;
+    fastcgi_pass  127.0.0.1:9000;
+    fastcgi_index index.php;
+    fastcgi_param SCRIPT_FILENAME /srv/openapply_blog$fastcgi_script_name;
+  }
+}

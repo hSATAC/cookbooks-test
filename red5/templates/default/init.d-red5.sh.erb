@@ -1,0 +1,191 @@
+#!/bin/sh
+#
+# /etc/init.d/red5 -- startup script for the red5 server
+#
+# Based on the tomcat6 init script.
+# Written by Miquel van Smoorenburg <miquels@cistron.nl>.
+# Modified for Ubuntu red5 by Fred Dixon <ffdixon@bigbluebutton.org> 
+# Modified for Debian GNU/Linux by Ian Murdock <imurdock@gnu.ai.mit.edu>.
+# Modified for Tomcat by Stefan Gybas <sgybas@debian.org>.
+# Modified for Tomcat6 by Thierry Carrez <thierry.carrez@ubuntu.com>.
+#
+### BEGIN INIT INFO
+# Provides:          red5
+# Required-Start:    $local_fs $remote_fs $network
+# Required-Stop:     $local_fs $remote_fs $network
+# Should-Start:      $named
+# Should-Stop:       $named
+# Default-Start:     2 3 4 5
+# Default-Stop:      1
+# Short-Description: Start red5.
+# Description:       Start the red5 service.
+### END INIT INFO
+
+set -e 
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+NAME=red5
+DESC="Red5 Server"
+RED5_HOME=/usr/share/$NAME
+DEFAULT=/etc/default/$NAME
+UMASK=0002
+
+# These variables are needed by Xuggler
+export XUGGLE_HOME=/usr/local
+export PATH=$PATH:$XUGGLE_HOME/bin
+export LD_LIBRARY_PATH=$XUGGLE_HOME/lib:$LD_LIBRARY_PATH
+
+
+if [ `id -u` -ne 0 ]; then
+  echo "You need root privileges to run this script"
+  exit 1
+fi
+ 
+# Make sure red5 is started with system locale
+if [ -r /etc/default/locale ]; then
+  . /etc/default/locale
+  export LANG
+fi
+
+. /lib/lsb/init-functions
+. /etc/default/rcS
+
+
+# The following variables can be overwritten in $DEFAULT
+
+# The first existing directory is used for JAVA_HOME (if JAVA_HOME is not
+# defined in $DEFAULT)
+JDK_DIRS="/usr/lib/jvm/java-1.7.0-openjdk-amd64/ /usr/lib/jvm/java-6-openjdk /usr/lib/jvm/java-6-sun /usr/lib/jvm/java-1.5.0-sun /usr/lib/j2sdk1.5-sun /usr/lib/j2sdk1.5-ibm"
+
+# Look for the right JVM to use
+for jdir in $JDK_DIRS; do
+  if [ -r "$jdir/bin/java" -a -z "${JAVA_HOME}" ]; then
+    JAVA_HOME="$jdir"
+  fi
+done
+export JAVA_HOME
+
+
+# Output file
+if [ -z "$OUT_FILE" ]; then
+  OUT_FILE=/var/log/red5.out
+fi
+
+# End of variables that can be overwritten in $DEFAULT
+
+
+# overwrite settings from default file
+if [ -f "$DEFAULT" ]; then
+  . "$DEFAULT"
+fi
+
+if [ ! -f "$RED5_HOME/red5-server-1.0.jar" ]; then
+  log_failure_msg "$NAME is not installed"
+  exit 1
+fi
+
+#
+# Function to wait if there are connections still open for <%= node[:red5][:rtmp][:port] %>.  Some browsers hang on to a connection
+# that prevents a ./red5 restart from binding to port <%= node[:red5][:rtmp][:port] %>
+#
+wait_1935_close () {
+  ACTIVE=$(netstat -ant | grep <%= node[:red5][:rtmp][:port] %> | wc | awk -F ' ' '{print $1}')
+  if [ $ACTIVE != 0 ]; then
+    echo -n "   Waiting for $ACTIVE connections on <%= node[:red5][:rtmp][:port] %> to close before starting Red5 "
+    while [ $ACTIVE != 0 ]; do
+      echo -n "."
+      sleep 5
+      ACTIVE=$(netstat -ant | grep <%= node[:red5][:rtmp][:port] %> | wc | awk -F ' ' '{print $1}')
+    done
+  fi
+  echo
+}
+
+# Define other required variables
+RED5_PID="/var/run/$NAME.pid"
+
+RED5_MAINCLASS=org.red5.server.Bootstrap
+RED5_CLASSPATH="$RED5_HOME/red5-server-1.0-bootstrap.jar:$RED5_HOME/conf"
+JAVA_OPTS="-Dpython.home=lib -Xms128M -Xmx128M -Dred5.root=$RED5_HOME -Dlogback.ContextSelector=org.red5.logging.LoggingContextSelector -Dcatalina.useNaming=true -Djava.security.debug=failure -cp $RED5_CLASSPATH org.red5.server.Bootstrap"
+
+
+case "$1" in
+  start)
+  if [ -z "$JAVA_HOME" ]; then
+    log_failure_msg "no JDK found - please set JAVA_HOME"
+    exit 1
+  fi
+
+  if [ ! -d "$RED5_HOME/conf" ]; then
+    log_failure_msg "invalid RED5_HOME: $RED5_HOME"
+    exit 1
+  fi
+
+  log_daemon_msg "Starting $DESC" "$NAME"
+  if start-stop-daemon --start --test --pidfile $RED5_PID \
+    --startas "$JAVA_HOME/bin/java" \
+    >/dev/null; then
+
+    wait_1935_close
+
+    start-stop-daemon --start --background --make-pidfile --chuid red5  --umask $UMASK \
+      --chdir $RED5_HOME --pidfile $RED5_PID --startas "$JAVA_HOME/bin/java" -- $JAVA_OPTS
+
+    sleep 5
+
+    # Because we pushed it into the background, we need to check it's status
+    if start-stop-daemon --test --start --pidfile $RED5_PID --startas "$JAVA_HOME/bin/java" >/dev/null; then
+      log_end_msg 1
+    else
+      log_end_msg 0
+    fi
+  else
+    log_progress_msg "(already running)"
+    log_end_msg 0
+  fi
+  ;;
+  stop)
+    log_daemon_msg "Stopping $DESC" "$NAME"
+    if start-stop-daemon --start --test --pidfile $RED5_PID \
+      --startas "$JAVA_HOME/bin/java" \
+      >/dev/null; then
+      log_progress_msg "(not running)"
+    else
+      start-stop-daemon --stop --pidfile $RED5_PID \
+        --startas "$JAVA_HOME/bin/java"
+      sleep 5
+      rm -f $RED5_PID
+    fi
+    log_end_msg 0
+  ;;
+  status)
+    if start-stop-daemon --start --test --pidfile $RED5_PID \
+    --startas "$JAVA_HOME/bin/java" \
+    >/dev/null; then
+      if [ -f "$RED5_PID" ]; then
+        log_success_msg "$DESC is not running, but pid file exists."
+        exit 1
+      else
+        log_success_msg "$DESC is not running."
+        exit 3
+      fi
+    else
+      log_success_msg "$DESC is running with pid `cat $RED5_PID`"
+    fi
+  ;;
+  restart|force-reload)
+    if start-stop-daemon --test --stop --pidfile "$RED5_PID" \
+    --startas "$JAVA_HOME/bin/java" \
+    >/dev/null; then
+      $0 stop
+      sleep 1
+    fi
+    $0 start
+  ;;
+  *)
+    log_success_msg "Usage: $0 {start|stop|restart|force-reload|status}"
+    exit 1
+  ;;
+esac
+
+exit 0

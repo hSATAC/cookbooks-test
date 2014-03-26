@@ -1,0 +1,20 @@
+# This file is managed by Chef for <%= @node[:hostname] %>
+# Do NOT modify this file directly.
+# Or remember apply changes to Chef configs.
+
+check process openapply_<%= @environment %>_delayed_job
+  with pidfile /srv/openapply/shared/pids/<%= @pid_file %>
+  start program = "/bin/su - deployer -c 'cd /srv/openapply/current; /usr/bin/env RAILS_ENV=<%= @environment %> script/delayed_job start -n <%= @workers %>'"
+  stop program =  "/bin/su - deployer -c 'cd /srv/openapply/current; /usr/bin/env RAILS_ENV=<%= @environment %> script/delayed_job stop -n <%= @workers %>'"
+  if does not exist 3 cycles then restart
+  if 3 restarts within 20 cycles then timeout
+  depends on openapply_<%= @environment %>_delayed_job_log
+
+check file openapply_<%= @environment %>_delayed_job_log
+  with path /srv/openapply/shared/log/delayed_job.log
+  if timestamp > 30 minutes then alert
+  if does not exist 3 cycles then alert
+
+check program check_number_of_workers with path "/usr/local/bin/check_delayed_jobs.sh"
+  start program = "/bin/su - deployer -c 'cd /srv/openapply/current; /usr/bin/env RAILS_ENV=production script/delayed_job start -n <%= @workers %>'"
+  if status != 0 for 2 cycles then start

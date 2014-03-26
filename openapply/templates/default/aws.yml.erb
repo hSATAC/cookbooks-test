@@ -1,0 +1,9 @@
+# This file is managed by Chef for <%= @node[:hostname] %>
+# Do NOT modify this file directly.
+# Or remember apply changes to Chef configs.
+
+<%= node['openapply']['environment'] %>:
+  access_key_id: "<%= @access_key_id %>"
+  secret_access_key: "<%= @secret_access_key %>"
+  bucket_name: "<%= @bucket_name %>"
+  asset_host: "<%= @uploads_asset_host %>"

@@ -1,0 +1,10 @@
+# This file is managed by Chef for <%= @node[:hostname] %>
+# Do NOT modify this file directly.
+# Or remember apply changes to Chef configs.
+
+check process openapply_<%= @environment %>_redis6379
+  with pidfile /var/run/redis/6379/redis_6379.pid
+  start program = "/etc/init.d/redis6379 start"
+  stop program =  "/etc/init.d/redis6379 stop"
+  if does not exist 2 cycles then restart
+  if 3 restarts within 8 cycles then timeout

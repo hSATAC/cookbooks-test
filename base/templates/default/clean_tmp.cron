@@ -1,0 +1,1 @@
+0 */4 * * * root find /tmp -maxdepth 1 -type f -amin +720 -exec rm -f {} \;

@@ -1,0 +1,10 @@
+# This file is managed by Chef for <%= @node[:hostname] %>
+# Do NOT modify this file directly.
+# Or remember apply changes to Chef configs.
+
+check process oa_<%= @environment %>_faria_mq
+  with pidfile /srv/openapply/shared/pids/<%= @pid_file %>
+  start program = "/bin/su - deployer -c 'cd /srv/openapply/current; /usr/bin/env RBENV_ROOT=/usr/local/rbenv/ RBENV_VERSION=<%= @ruby_version %> RAILS_ENV=<%= @environment %> /usr/local/rbenv/bin/rbenv exec bundle exec <%= @exec_name %> start'"
+  stop program =  "/bin/su - deployer -c 'cd /srv/openapply/current; /usr/bin/env RBENV_ROOT=/usr/local/rbenv/ RBENV_VERSION=<%= @ruby_version %> RAILS_ENV=<%= @environment %> /usr/local/rbenv/bin/rbenv exec bundle exec <%= @exec_name %>  stop'"
+  if does not exist 3 cycles then restart
+  if 3 restarts within 10 cycles then timeout

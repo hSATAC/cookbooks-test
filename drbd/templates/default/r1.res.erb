@@ -1,0 +1,14 @@
+resource r1 {
+  on <%= node[:drbd][:master][:name] %> {
+    device    /dev/drbd1;
+    disk      /dev/sdb1;
+    address   <%= node[:drbd][:master][:ip] %>:<%= node[:drbd][:master][:port] %>;
+    meta-disk internal;
+  }
+  on <%= node[:drbd][:slave][:name] %> {
+    device    /dev/drbd1;
+    disk      /dev/sdb1;
+    address   <%= node[:drbd][:slave][:ip] %>:<%= node[:drbd][:slave][:port] %>;
+    meta-disk internal;
+  }
+}

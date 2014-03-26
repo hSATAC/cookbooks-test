@@ -1,0 +1,25 @@
+# encoding: utf-8
+
+# This file is managed by Chef for <%= @node[:hostname] %>
+# Do NOT modify this file directly.
+# Or remember apply changes to Chef configs.
+
+##
+# Backup
+# Generated Main Config Template
+#
+# For more information:
+#
+# View the Git repository at https://github.com/meskyanichi/backup
+# View the Wiki/Documentation at https://github.com/meskyanichi/backup/wiki
+# View the issue log at https://github.com/meskyanichi/backup/issues
+
+# * * * * * * * * * * * * * * * * * * * *
+#        Do Not Edit Below Here.
+# All Configuration Should Be Made Above.
+
+##
+# Load all models from the models directory.
+Dir[File.join(File.dirname(Config.config_file), "models", "*.rb")].each do |model|
+  instance_eval(File.read(model))
+end

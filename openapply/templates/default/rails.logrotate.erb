@@ -1,0 +1,18 @@
+# This file is managed by Chef for <%= @node[:hostname] %>
+# Do NOT modify this file directly.
+# Or remember apply changes to Chef configs.
+
+/srv/openapply/shared/log/*.log {
+  daily
+  missingok
+  rotate <%= @node[:logrotate][:keep] %>
+  compress
+  delaycompress
+  notifempty
+  create 644 deployer deployer
+  sharedscripts
+  dateext
+  postrotate
+    touch /srv/openapply/current/tmp/restart.txt
+  endscript
+}

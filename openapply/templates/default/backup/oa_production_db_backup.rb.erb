@@ -1,0 +1,67 @@
+# encoding: utf-8
+
+# This file is managed by Chef for <%= @node[:hostname] %>
+# Do NOT modify this file directly.
+# Or remember apply changes to Chef configs.
+
+##
+# Backup Generated: oa_production_db_backup
+# Once configured, you can run the backup with the following command:
+#
+# $ backup perform -t oa_production_db_backup [-c <path_to_configuration_file>]
+#
+Backup::Model.new(:oa_production_db_backup, 'OpenApply Production DB Backup') do
+  ##
+  # MySQL [Database]
+  #
+  database MySQL do |db|
+    db.name               = "openapply_production"
+    db.username           = "openapply"
+    db.password           = "<%= @db_password %>"
+    db.host               = "<%= @db_host %>"
+    db.port               = 3306
+    db.additional_options = ["--quick", "--single-transaction"]
+  end
+
+  ##
+  # Amazon Simple Storage Service [Storage]
+  #
+  store_with S3 do |s3|
+    s3.access_key_id     = "<%= @access_key_id %>"
+    s3.secret_access_key = "<%= @secret_access_key %>"
+    s3.region            = "us-east-1"
+    s3.bucket            = "openapply.backup"
+    s3.path              = "/database"
+    s3.keep              = 90
+  end
+
+  ##
+  # Local (Copy) [Storage]
+  #
+  store_with Local do |local|
+    local.path       = "/home/deployer/db-dumps"
+    local.keep       = 14
+  end
+
+  ##
+  # Bzip2 [Compressor]
+  #
+  compress_with Gzip
+
+  ##
+  # Hipchat [Notifier]
+  #
+  notify_by Hipchat do |hipchat|
+    hipchat.on_success = true
+    hipchat.on_warning = true
+    hipchat.on_failure = true
+
+    hipchat.token          = "a57656cc5056535a915d01843310bb"
+    hipchat.from           = "Backup"
+    hipchat.rooms_notified = ["NOC logs"]
+    hipchat.success_color  = "green"
+    hipchat.warning_color  = "yellow"
+    hipchat.failure_color  = "red"
+  end
+
+end

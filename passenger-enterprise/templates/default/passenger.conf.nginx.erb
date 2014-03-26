@@ -1,0 +1,12 @@
+passenger_root <%= node['nginx']['passenger']['root'] %>;
+passenger_ruby <%= node['nginx']['passenger']['ruby'] %>;
+
+passenger_max_pool_size         <%= node['passenger-enterprise']['max_pool_size'] %>;
+passenger_spawn_method          <%= node['passenger-enterprise']['spawn_method'] %>;
+passenger_buffer_response       <%= node['passenger-enterprise']['buffer_response'] %>;
+passenger_min_instances         <%= node['passenger-enterprise']['min_instances'] %>;
+passenger_max_instances_per_app <%= node['passenger-enterprise']['max_instances_per_app'] %>;
+passenger_pool_idle_time        <%= node['passenger-enterprise']['pool_idle_time'] %>;
+passenger_max_requests          <%= node['passenger-enterprise']['max_requests'] %>;
+passenger_rolling_restarts      <%= node['passenger-enterprise']['rolling_restarts'] %>;
+passenger_resist_deployment_errors <%= node['passenger-enterprise']['resist_deployment_errors'] %>;

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+WORKERS=<%= @workers %>
+RUNNING=`ps aux -U deployer | grep " delayed_job\." | grep -v grep | wc -l`
+
+if [ $WORKERS = $RUNNING ]; then
+  echo "OK"
+  exit 0
+else
+  echo "Only $RUNNING workers running, expected $WORKERS, relaunching." 1>&2
+  exit 1
+fi

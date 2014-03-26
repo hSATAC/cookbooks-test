@@ -1,0 +1,71 @@
+# This file is managed by Chef for <%= @node[:hostname] %>
+# Do NOT modify this file directly.
+# Or remember apply changes to Chef configs.
+
+server {
+  listen 80;
+  server_name <%= node[:openapply][:domains] %>;
+
+  if ($host ~* "^([^.]+(\.?[^.]+)*)\.<%= node[:openapply][:root_domain] %>$"){
+    set $subd $1;
+    rewrite ^(.*)$ https://$subd.<%= node[:openapply][:root_domain] %>$1 permanent;
+    break;
+  }
+}
+
+server {
+  listen 443 ssl spdy;
+  server_name <%= node[:openapply][:domains] %>;
+
+  ssl                 on;
+  ssl_certificate     <%= node[:openapply][:ssl_certificate_path] %>/openapply.com.combined.crt;
+  ssl_certificate_key <%= node[:openapply][:ssl_certificate_path] %>/openapply.com.key;
+
+  root /srv/openapply/current/public;
+
+  access_log /var/log/nginx/openapply/access.log;
+  error_log  /var/log/nginx/openapply/error.log;
+
+  rails_env <%= node[:openapply][:environment] %>;
+  passenger_enabled on;
+
+<% if node[:openapply][:passenger_ruby] %>
+  passenger_ruby <%= node[:openapply][:passenger_ruby] %>;
+<% end %>
+
+  location ^~ /assets/ {
+    gzip_static on;
+    expires max;
+    add_header Cache-Control public;
+    add_header 'Access-Control-Allow-Origin' '*';
+  }
+
+  if (-f $document_root/system/maintenance.html) {
+    return 503;
+  }
+
+  error_page 503 @maintenance;
+  location @maintenance {
+    rewrite  ^(.*)$  /system/maintenance.html last;
+    break;
+  }
+
+  # serve favicon.ico from public dir
+  location /favicon.ico  {
+    expires max;
+    break;
+  }
+
+  # This is a ruby application, deny other common types.
+  location ~ \.(php|asp|aspx|jsp|cfm|dll)$ {
+    deny all;
+    break;
+  }
+
+  error_page 500 502 503 504 /500.html;
+  client_max_body_size 4G;
+  keepalive_timeout 10;
+
+}
+
+passenger_pre_start https://<%= node[:openapply][:default_domain] %>/;

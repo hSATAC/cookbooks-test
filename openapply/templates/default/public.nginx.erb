@@ -1,0 +1,67 @@
+# This file is managed by Chef for <%= @node[:hostname] %>
+# Do NOT modify this file directly.
+# Or remember apply changes to Chef configs.
+
+server {
+  listen 80;
+  server_name openapply.com www.openapply.com ~^((?<subdomains>.+)?\.)?openapp.ly$;
+
+  root /srv/openapply_public;
+  index index.html index.htm;
+
+  access_log /var/log/nginx/openapply_public/access.log;
+  error_log  /var/log/nginx/openapply_public/error.log;
+
+  if ($subdomains !~* "^(www)?$") {
+    rewrite ^/(.*)$ https://$subdomains.openapply.com/$1 redirect;
+  }
+
+  rewrite ^/(?!index)(.*).html$ $1 permanent;
+
+  location / {
+    # First attempt to serve request as file, then
+    # as directory, then fall back to 404
+    # hide html extension
+    try_files $uri.html $uri/ =404;
+  }
+
+  # Redirect 404 to index
+  error_page 404 = @fallback;
+  location @fallback {
+    rewrite  .*  / permanent;
+  }
+}
+
+server {
+  listen 443 ssl spdy;
+  server_name openapply.com www.openapply.com ~^((?<subdomains>.+)?\.)?openapp.ly$;
+
+  ssl                 on;
+  ssl_certificate     <%= node[:openapply][:ssl_certificate_path] %>/openapply.com.combined.crt;
+  ssl_certificate_key <%= node[:openapply][:ssl_certificate_path] %>/openapply.com.key;
+
+  root /srv/openapply_public;
+  index index.html index.htm;
+
+  access_log /var/log/nginx/openapply_public/access.log;
+  error_log  /var/log/nginx/openapply_public/error.log;
+
+  if ($subdomains !~* "^(www)?$") {
+    rewrite ^/(.*)$ https://$subdomains.openapply.com/$1 redirect;
+  }
+
+  rewrite ^/(?!index)(.*).html$ $1 permanent;
+
+  location / {
+    # First attempt to serve request as file, then
+    # as directory, then fall back to 404
+    # hide html extension
+    try_files $uri.html $uri/ =404;
+  }
+
+  # Redirect 404 to index
+  error_page 404 = @fallback;
+  location @fallback {
+    rewrite  .*  / permanent;
+  }
+}

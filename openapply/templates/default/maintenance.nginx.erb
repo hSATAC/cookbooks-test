@@ -1,0 +1,28 @@
+
+server {
+  listen 80;
+  server_name *.openapply.com;
+
+  root /srv/openapply_public/maintenance;
+  index index.html index.htm;
+
+  location / {
+    try_files $uri $uri/ /index.html =404;
+  }
+}
+
+server {
+  listen 443 ssl spdy;
+  server_name *.openapply.com;
+
+  ssl                 on;
+  ssl_certificate     /opt/ssl-certificate/openapply/openapply.com.combined.crt;
+  ssl_certificate_key /opt/ssl-certificate/openapply/openapply.com.key;
+
+  root /srv/openapply_public/maintenance;
+  index index.html index.htm;
+
+  location / {
+    try_files $uri $uri/ /index.html =404;
+  }
+}

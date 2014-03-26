@@ -1,0 +1,29 @@
+# This file is managed by Chef for <%= @node[:hostname] %>
+# Do NOT modify this file directly.
+# Or remember apply changes to Chef configs.
+
+<%= node[:openapply][:environment] %>:
+  adapter: mysql2
+  encoding: utf8
+  reconnect: false
+  database: openapply_<%= node[:openapply][:environment] %>
+  pool: 5
+  username: openapply
+  password: "<%= @password %>"
+  <% if @host == '' %>
+  socket: /var/run/mysqld/mysqld.sock
+  <% else %>
+  port: 3306
+  host: <%= @host %>
+  <% end %>
+  
+legacy:
+  adapter: mysql2
+  encoding: utf8
+  reconnect: false
+  database: openapply_legacy
+  pool: 5
+  username: openapply
+  password: "<%= @password %>"
+  port: 3306
+  host: "<%= @host %>"
